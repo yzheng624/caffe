@@ -212,19 +212,29 @@ const vector<Blob<Dtype>*>& Net<Dtype>::ForwardPrefilled() {
   for (int i = 0; i < layers_.size(); ++i) {
     layers_[i]->Forward(bottom_vecs_[i], &top_vecs_[i]);
 #ifdef VERBOSE
+  printf("===Forward===\n");
+#endif
+#ifdef VERBOSE
     printf("%s\n", layers_[i]->layer_param().name().c_str());
-    if (layers_[i]->layer_param().name() != "facepoint" && layers_[i]->layer_param().name() != "mnist") { 
-        for (int j = 0; j < 8; ++j) {
-            printf("%lf ", (bottom_vecs_[i][0])->cpu_data()[j]);
+    if (i!=0) { 
+        for (int j = 0; j < 16; ++j) {
+            for (int k = 0; k < 16; ++k) {
+                printf("%lf ", (bottom_vecs_[i][0])->offset(0, 0, j, k));
+            }
+            printf("\n");
         }
         printf("\n");
     }
+    /*
     if (layers_[i]->layer_param().name() != "loss") { 
-        for (int j = 0; j < 8; ++j) {
-            printf("%lf ", (top_vecs_[i][0])->cpu_data()[j]);
+        for (int j = 0; j < 16; ++j) {
+            for (int k = 0; k < 16; ++k) {
+                printf("%lf ", (top_vecs_[i][0])->offset(0, 0, j, k));
+            }
         }
         printf("\n");
     }
+    */
 #endif
   }
   return net_output_blobs_;
@@ -273,8 +283,11 @@ Dtype Net<Dtype>::Backward() {
 #ifdef VERBOSE
     printf("%s\n", layers_[i]->layer_param().name().c_str());
     if (layers_[i]->layer_param().name() != "loss") { 
-        for (int j = 0; j < 8; ++j) {
-            printf("%lf ", (top_vecs_[i][0])->cpu_diff()[j]);
+        for (int j = 0; j < 16; ++j) {
+            for (int k = 0; k < 16; ++k) {
+                printf("%lf ", (top_vecs_[i][0])->diff_at(0, 0, j, k));
+            }
+            printf("\n");
         }
         printf("\n");
     }
