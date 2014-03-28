@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cfloat>
 #include <vector>
+#include <cstdio>
 
 #include "caffe/layer.hpp"
 #include "caffe/vision_layers.hpp"
@@ -94,7 +95,6 @@ Dtype InfogainLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   return loss / num;
 }
 
-
 template <typename Dtype>
 void EuclideanLossLayer<Dtype>::SetUp(
   const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
@@ -112,8 +112,8 @@ void EuclideanLossLayer<Dtype>::SetUp(
 template <typename Dtype>
 Dtype EuclideanLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
     const bool propagate_down, vector<Blob<Dtype>*>* bottom) {
-  int count = (*bottom)[0]->count();
-  int num = (*bottom)[0]->num();
+  int count = (*bottom)[0]->count(); //512
+  int num = (*bottom)[0]->num(); //64
   caffe_sub(count, (*bottom)[0]->cpu_data(), (*bottom)[1]->cpu_data(),
       difference_.mutable_cpu_data());
   Dtype loss = caffe_cpu_dot(
@@ -122,6 +122,36 @@ Dtype EuclideanLossLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
   caffe_axpby(count, Dtype(1) / num, difference_.cpu_data(), Dtype(0),
       (*bottom)[0]->mutable_cpu_diff());
   return loss;
+}
+
+template <typename Dtype>
+void EuclideanAccuracyLayer<Dtype>::SetUp(
+  const vector<Blob<Dtype>*>& bottom, vector<Blob<Dtype>*>* top) {
+  CHECK_EQ(bottom.size(), 2) << "Loss Layer takes two blobs as input.";
+  CHECK_EQ(top->size(), 1) << "Loss Layer takes no as output.";
+  CHECK_EQ(bottom[0]->num(), bottom[1]->num())
+      << "The data and label should have the same number.";
+  CHECK_EQ(bottom[0]->channels(), bottom[1]->channels());
+  CHECK_EQ(bottom[0]->height(), bottom[1]->height());
+  CHECK_EQ(bottom[0]->width(), bottom[1]->width());
+  difference_.Reshape(bottom[0]->num(), bottom[0]->channels(),
+      bottom[0]->height(), bottom[0]->width());
+  (*top)[0]->Reshape(1, 2, 1, 1);
+}
+
+template <typename Dtype>
+void EuclideanAccuracyLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+    vector<Blob<Dtype>*>* top) {
+  int count = bottom[0]->count();
+  int num = bottom[0]->num();
+  Dtype logprob = 0;
+  caffe_sub(count, bottom[0]->cpu_data(), bottom[1]->cpu_data(),
+      difference_.mutable_cpu_data());
+  Dtype loss = caffe_cpu_dot(
+      count, difference_.cpu_data(), difference_.cpu_data()) / num / Dtype(2);
+  logprob -= log(loss);
+  (*top)[0]->mutable_cpu_data()[0] = loss;
+  (*top)[0]->mutable_cpu_data()[1] = logprob;
 }
 
 template <typename Dtype>
@@ -172,5 +202,6 @@ INSTANTIATE_CLASS(MultinomialLogisticLossLayer);
 INSTANTIATE_CLASS(InfogainLossLayer);
 INSTANTIATE_CLASS(EuclideanLossLayer);
 INSTANTIATE_CLASS(AccuracyLayer);
+INSTANTIATE_CLASS(EuclideanAccuracyLayer);
 
 }  // namespace caffe

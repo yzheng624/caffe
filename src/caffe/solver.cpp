@@ -60,6 +60,11 @@ void Solver<Dtype>::Solve(const char* resume_file) {
     Dtype loss = net_->ForwardBackward(bottom_vec);
     ComputeUpdateValue();
     net_->Update();
+#ifdef VERBOSE
+    if (param_.print_layer_freq() && ((iter_ % param_.print_layer_freq()) == 0)) {
+        net_->print_layer(16);
+    }
+#endif
 
     if (param_.display() && iter_ % param_.display() == 0) {
       LOG(INFO) << "Iteration " << iter_ << ", loss = " << loss;

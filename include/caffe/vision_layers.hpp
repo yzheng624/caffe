@@ -603,6 +603,27 @@ class EuclideanLossLayer : public Layer<Dtype> {
 
 
 template <typename Dtype>
+class EuclideanAccuracyLayer : public Layer<Dtype> {
+ public:
+  explicit EuclideanAccuracyLayer(const LayerParameter& param)
+      : Layer<Dtype>(param) {}
+  virtual void SetUp(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+
+ protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      vector<Blob<Dtype>*>* top);
+  // The accuracy layer should not be used to compute backward operations.
+  virtual Dtype Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const bool propagate_down, vector<Blob<Dtype>*>* bottom) {
+    NOT_IMPLEMENTED;
+    return Dtype(0.);
+  }
+  Blob<Dtype> difference_;
+};
+
+
+template <typename Dtype>
 class AccuracyLayer : public Layer<Dtype> {
  public:
   explicit AccuracyLayer(const LayerParameter& param)

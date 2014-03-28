@@ -47,6 +47,7 @@ class Net {
     Forward(bottom);
     return Backward();
   }
+  void print_layer(int dim);
 
   // Updates the network weights based on the diff values computed.
   void Update();

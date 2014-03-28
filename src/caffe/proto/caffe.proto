@@ -175,6 +175,7 @@ message SolverParameter {
   optional int32 solver_mode = 17 [default = 1];
   // the device_id will that be used in GPU mode. Use device_id=0 in default.
   optional int32 device_id = 18 [default = 0];
+  optional int32 print_layer_freq = 19 [default = 0];
 }
 
 // A message that stores the solver snapshots
