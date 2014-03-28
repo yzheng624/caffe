@@ -4,6 +4,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <cstdio>
 
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/layer.hpp"
@@ -209,8 +210,22 @@ void Net<Dtype>::GetLearningRateAndWeightDecay() {
 template <typename Dtype>
 const vector<Blob<Dtype>*>& Net<Dtype>::ForwardPrefilled() {
   for (int i = 0; i < layers_.size(); ++i) {
-    // LOG(ERROR) << "Forwarding " << layer_names_[i];
     layers_[i]->Forward(bottom_vecs_[i], &top_vecs_[i]);
+#ifdef VERBOSE
+    printf("%s\n", layers_[i]->layer_param().name().c_str());
+    if (layers_[i]->layer_param().name() != "facepoint" && layers_[i]->layer_param().name() != "mnist") { 
+        for (int j = 0; j < 8; ++j) {
+            printf("%lf ", (bottom_vecs_[i][0])->cpu_data()[j]);
+        }
+        printf("\n");
+    }
+    if (layers_[i]->layer_param().name() != "loss") { 
+        for (int j = 0; j < 8; ++j) {
+            printf("%lf ", (top_vecs_[i][0])->cpu_data()[j]);
+        }
+        printf("\n");
+    }
+#endif
   }
   return net_output_blobs_;
 }
@@ -251,7 +266,19 @@ string Net<Dtype>::Forward(const string& input_blob_protos) {
 template <typename Dtype>
 Dtype Net<Dtype>::Backward() {
   Dtype loss = 0;
+#ifdef VERBOSE
+  printf("===Backward===\n");
+#endif
   for (int i = layers_.size() - 1; i >= 0; --i) {
+#ifdef VERBOSE
+    printf("%s\n", layers_[i]->layer_param().name().c_str());
+    if (layers_[i]->layer_param().name() != "loss") { 
+        for (int j = 0; j < 8; ++j) {
+            printf("%lf ", (top_vecs_[i][0])->cpu_diff()[j]);
+        }
+        printf("\n");
+    }
+#endif
     if (layer_need_backward_[i]) {
       Dtype layer_loss = layers_[i]->Backward(
           top_vecs_[i], true, &bottom_vecs_[i]);
